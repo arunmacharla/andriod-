@@ -1,0 +1,54 @@
+version: 0.2
+
+phases:
+  install:
+    commands:
+      - sudo apt update
+      - sudo apt install -y openjdk-11-jdk
+      - wget https://services.gradle.org/distributions/gradle-7.2-bin.zip -P /tmp
+      - sudo unzip -d /opt/gradle /tmp/gradle-7.2-bin.zip
+      - sudo ln -s /opt/gradle/gradle-7.2 /opt/gradle/latest
+      - printf "export GRADLE_HOME=/opt/gradle/latest\nexport PATH=$GRADLE_HOME/bin:$PATH\n" > /etc/profile.d/gradle.sh
+      - sudo chmod +x /etc/profile.d/gradle.sh
+      - cd /etc/profile.d/
+      - ./gradle.sh
+      - sudo mkdir ~/DevTools
+      - sudo mkdir ~/DevTools/Android
+      - wget https://dl.google.com/android/repository/commandlinetools-linux-8092744_latest.zip 
+      - unzip commandlinetools-linux-8092744_latest.zip -d ~/DevTools/Android/cmdline-tools
+      - mv ~/DevTools/Android/cmdline-tools/cmdline-tools ~/DevTools/Android/cmdline-tools/tools
+      - ls -l ~/DevTools/Android/
+      - ls -l ~/DevTools/Android/cmdline-tools
+      - ls -l ~/DevTools/Android/cmdline-tools/tools
+      - export DEV_TOOLS="/root/DevTools"
+      - export ANDROID_HOME="$DEV_TOOLS/Android"
+      - export PATH=$ANDROID_HOME/cmdline-tools/tools/bin:$PATH
+      - echo "$PATH"
+      - sdkmanager --list
+      - echo y | sdkmanager "platform-tools" "platforms;android-30" "platforms;android-31" "platforms;android-32" "platforms;android-Tiramisu"
+
+  build:
+    commands:
+      - java -version
+      - gradle -v
+      - sdkmanager --version
+      - cd ~
+      - cd /
+      - echo $CODEBUILD_SRC_DIR
+      - cd $CODEBUILD_SRC_DIR
+      - cd QCMiddlewareApp/app chmod +x .
+      - VERSIONCODE=`sed -n 's/versionCode \(.*\)/\1/p' < build.gradle |  tr -d \'' "\'`
+      - VERSIONNAME=`sed -n 's/versionName \(.*\)/\1/p' < build.gradle |  tr -d \'' "\'`
+      - echo $VERSIONCODE
+      - echo $VERSIONNAME
+      - cd $CODEBUILD_SRC_DIR
+      - cd QCMiddlewareApp/ , chmod +x * 
+      - chmod +x gradlew
+      - ls
+      - ./gradlew assembleDebug --console plain 
+      - cd Snapdragon_Satellite_Interface_Library/build/outputs/aar
+      - ls
+      - for f in *.aar; do mv "$f" "${f%.aar}_${VERSIONCODE}_${VERSIONNAME}.aar"; done
+artifacts:
+  files:
+    - QCMiddlewareApp/Snapdragon_Satellite_Interface_Library/build/outputs/aar/*.aar
